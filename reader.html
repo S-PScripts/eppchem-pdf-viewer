@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Book Viewer (Spread Layout)</title>
+    <style>
+        :root {
+            --bg: #121212;
+            --panel: #1e1e1e;
+            --accent: #3b82f6;
+            --text: #e5e7eb;
+        }
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        /* Top Navigation Bar */
+        .toolbar {
+            background: var(--panel);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+            z-index: 10;
+        }
+        .controls-group { display: flex; align-items: center; gap: 10px; }
+        
+        input[type="number"] {
+            background: #333;
+            color: white;
+            border: 1px solid #444;
+            padding: 5px;
+            width: 60px;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        button:hover { background: #2563eb; }
+        button.secondary { background: #444; }
+        button.secondary:hover { background: #555; }
+
+        /* Main Viewport */
+        .viewport {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            padding: 20px;
+        }
+        .page-container {
+            max-height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0; /* Tight spread for dual pages */
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            background: #000;
+        }
+        img {
+            max-height: 88vh;
+            max-width: 48vw;
+            object-fit: contain;
+            background: white;
+            display: block;
+        }
+        img.single { max-width: 90vw; }
+        
+        /* Placeholder to keep the right-page centered when page 1 is alone */
+        .placeholder {
+            width: 48vw;
+            height: 88vh;
+            visibility: hidden;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="toolbar">
+        <div class="controls-group">
+            <button class="secondary" onclick="toggleDualMode()" id="modeBtn">Switch to Dual Page</button>
+        </div>
+
+        <div class="controls-group">
+            <button onclick="changePage(-1)">◀ Prev</button>
+            <span>Page <input type="number" id="pageInput" min="1" max="364" value="1" onchange="jumpToPage()"> / 364</span>
+            <button onclick="changePage(1)">Next ▶</button>
+        </div>
+
+        <div class="controls-group" style="font-size: 0.85em; color: #888;">
+            Keys: ← / →
+        </div>
+    </div>
+
+    <div class="viewport">
+        <div class="page-container" id="pageDisplay">
+            <!-- Left Page / Placeholder -->
+            <div id="leftWrapper">
+                <img id="imgLeft" src="" alt="">
+            </div>
+            <!-- Right Page -->
+            <div id="rightWrapper">
+                <img id="imgRight" src="" alt="">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const baseUrl = "https://assets-runtime-production-oxed-oup.avallain.net/ebooks/<>/images/page-";
+        const maxPages = 364;
+        let currentPage = 1; // Represents the "primary" page being viewed
+        let isDualMode = false;
+
+        const imgLeft = document.getElementById('imgLeft');
+        const imgRight = document.getElementById('imgRight');
+        const leftWrapper = document.getElementById('leftWrapper');
+        const pageInput = document.getElementById('pageInput');
+        const modeBtn = document.getElementById('modeBtn');
+
+        function updateDisplay() {
+            if (currentPage < 1) currentPage = 1;
+            if (currentPage > maxPages) currentPage = maxPages;
+
+            pageInput.value = currentPage;
+
+            if (!isDualMode) {
+                // SINGLE PAGE MODE
+                leftWrapper.style.display = "none";
+                imgRight.src = `${baseUrl}${currentPage}.jpg`;
+                imgRight.className = "single";
+            } else {
+                // DUAL PAGE MODE
+                leftWrapper.style.display = "block";
+                imgRight.className = "";
+                
+                if (currentPage === 1) {
+                    // Page 1 is on the right, left is empty
+                    imgLeft.style.display = "none";
+                    leftWrapper.className = "placeholder"; // Keep space so Page 1 stays right
+                    imgRight.src = `${baseUrl}1.jpg`;
+                } else {
+                    // Ensure we are at the start of a spread (even number on left)
+                    const leftPageNum = currentPage % 2 === 0 ? currentPage : currentPage - 1;
+                    const rightPageNum = leftPageNum + 1;
+
+                    leftWrapper.className = "";
+                    imgLeft.style.display = "block";
+                    imgLeft.src = `${baseUrl}${leftPageNum}.jpg`;
+
+                    if (rightPageNum <= maxPages) {
+                        imgRight.src = `${baseUrl}${rightPageNum}.jpg`;
+                        imgRight.style.visibility = "visible";
+                    } else {
+                        imgRight.style.visibility = "hidden";
+                    }
+                }
+            }
+        }
+
+        function changePage(direction) {
+            if (!isDualMode) {
+                currentPage += direction;
+            } else {
+                if (currentPage === 1 && direction === 1) {
+                    currentPage = 2; // Move from cover to first spread
+                } else if (currentPage <= 3 && direction === -1) {
+                    currentPage = 1; // Move from first spread back to cover
+                } else {
+                    currentPage += (direction * 2);
+                }
+            }
+            updateDisplay();
+        }
+
+        function jumpToPage() {
+            const val = parseInt(pageInput.value);
+            if (!isNaN(val)) {
+                currentPage = val;
+                updateDisplay();
+            }
+        }
+
+        function toggleDualMode() {
+            isDualMode = !isDualMode;
+            modeBtn.innerText = isDualMode ? "Switch to Single Page" : "Switch to Dual Page";
+            updateDisplay();
+        }
+
+        // Keyboard Navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === "ArrowLeft") changePage(-1);
+            if (e.key === "ArrowRight") changePage(1);
+            if (e.key === "Enter") jumpToPage();
+        });
+
+        // Initialize
+        updateDisplay();
+    </script>
+</body>
+</html>
