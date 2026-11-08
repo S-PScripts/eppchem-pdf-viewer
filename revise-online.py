@@ -1,4 +1,6 @@
 # For https://reviseonline.pearson.com/
+# Use at your own risk.
+
 import json
 
 def extract_urls(obj, urls=None):
@@ -8,6 +10,7 @@ def extract_urls(obj, urls=None):
     if isinstance(obj, dict):
         for k, v in obj.items():
             if k == 'URL' and isinstance(v, str) and v.startswith('http'):
+                v = f'"{v}",'
                 urls.append(v)
             else:
                 extract_urls(v, urls)
