@@ -1,3 +1,6 @@
+// run revise-online-pro.py, once you're on table of contents run this code below in console/inspect element and wait for it to finish
+// will be merged into revise-online-pro.py later
+
 async function clickAllChapters() {
     // Expand all collapsible category headers
     const expanders = document.querySelectorAll('div[class*="tw-cursor-pointer"], .nav-wrapper-nav [class*="flex"]');
