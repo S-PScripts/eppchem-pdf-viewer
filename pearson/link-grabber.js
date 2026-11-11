@@ -1,4 +1,6 @@
-// run revise-online-pro.py, once you're on table of contents run this code below in console/inspect element and wait for it to finish
+// run revise-online-pro.py
+// once you're on table of contents run this code below in console/inspect element and wait for it to finish
+// if it does nothing make sure it's set as player, not top
 // will be merged into revise-online-pro.py later
 
 async function clickAllChapters() {
